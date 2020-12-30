@@ -1,0 +1,39 @@
+port="8080"
+
+[[api]]
+    router="/login"
+	method=["post"]
+	parameter=["account","password"]
+	contenttype="application/x-www-form-urlencoded"
+	db=true
+	[api.response]
+		errorCode=0
+		errorMessage="message"
+		[api.response.data]
+		type="text"
+		content=["aaa"]
+
+		
+[[api]]
+	router="/account"
+	method=["get","post","patch","delete"]
+	[api.response]
+		errorCode=0
+		errorMessage=""
+        [api.response.data]
+		type="db"
+		content=["account","password","code"]
+	
+
+[[api]]
+	router="/check"
+	[api.response]     
+		errorCode=0
+		errorMessage=""
+		[api.response.data]
+		type="hash"
+		content=["sha256","keykeykey"]
+
+[db]
+	schema=["account","password","code"]
+	type=["text","sha256","text"]	

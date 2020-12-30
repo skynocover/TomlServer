@@ -1,0 +1,6 @@
+@url=http://localhost:8080
+
+POST {{url}}/login
+Content-Type: application/x-www-form-urlencoded
+
+account=admin&password=asdf
