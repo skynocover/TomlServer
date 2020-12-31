@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"tomlserver/src/database"
 	"tomlserver/src/globals"
 
 	"github.com/BurntSushi/toml"
@@ -36,9 +37,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "api content type of method fail")
 		return
 	}
-	api.GetParam(r)
+	param := api.GetParam(r)
+	log.Println(param)
+
+	api.Database(param)
+
+	for k, v := range database.Content {
+		fmt.Println(k, v)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	// w.Write(api.Resp())
-	fmt.Fprintf(w, api.Resp())
+	w.Write(api.Resp())
 }

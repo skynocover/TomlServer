@@ -5,18 +5,20 @@ port="8080"
 	method=["post"]
 	parameter=["account","password"]
 	contenttype="application/x-www-form-urlencoded"
-	db=true
 	[api.response]
+		type="application/x-www-form-urlencoded"
 		errorCode=0
 		errorMessage="message"
 		[api.response.data]
 		type="text"
 		content=["aaa"]
 
-		
 [[api]]
 	router="/account"
 	method=["get","post","patch","delete"]
+	parameter=["account","password"]
+	contenttype="application/json"
+	db=true
 	[api.response]
 		errorCode=0
 		errorMessage=""
@@ -24,7 +26,6 @@ port="8080"
 		type="db"
 		content=["account","password","code"]
 	
-
 [[api]]
 	router="/check"
 	[api.response]     

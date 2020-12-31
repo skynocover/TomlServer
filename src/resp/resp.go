@@ -1,6 +1,6 @@
 package resp
 
-import "unsafe"
+import "encoding/json"
 
 // Response ...
 type Response struct {
@@ -12,5 +12,6 @@ type Response struct {
 // ToBytes ...
 func (r *Response) ToBytes() []byte {
 
-	return *(*[]byte)(unsafe.Pointer(r))
+	jsondata, _ := json.Marshal(r)
+	return jsondata
 }

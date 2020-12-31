@@ -2,27 +2,26 @@ package database
 
 import (
 	"fmt"
-	"log"
-	"sync"
-
-	"github.com/google/uuid"
 )
 
+var id = 0
+
 // Content ...
-var Content = &sync.Map{}
+var Content = make(map[int]map[string]string, 0)
 
 // Insert ...
-func Insert(value string) {
-	id := uuid.New().String()
-	Content.Store(id, value)
+func Insert(param map[string]string) {
+	Content[id] = param
+	id++
 }
 
 // Scan ...
 func Scan() {
-	Content.Range(func(key interface{}, value interface{}) bool { //遍歷需要使用func
-		k := key.(string)
-		v := value.(string)
-		log.Println(fmt.Sprintf("key: %s, value: %s", k, v))
-		return true //回傳true會繼續下一輪
-	})
+
+	for k, v := range Content {
+
+		fmt.Println(k, v)
+
+	}
+
 }

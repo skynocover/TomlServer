@@ -4,3 +4,12 @@ POST {{url}}/login
 Content-Type: application/x-www-form-urlencoded
 
 account=admin&password=asdf
+
+####
+POST {{url}}/account
+Content-Type: application/json
+
+{
+    "account": "admin",
+    "password": "456789"
+}
