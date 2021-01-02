@@ -20,21 +20,31 @@ port="8080"
 	contenttype="application/json"
 	db=true
 	[api.response]
+		type="application/x-www-form-urlencoded"
 		errorCode=0
-		errorMessage=""
+		errorMessage="asdf"
         [api.response.data]
 		type="db"
 		content=["account","password","code"]
 	
 [[api]]
 	router="/check"
-	[api.response]     
+	[api.response]
+		type="application/x-www-form-urlencoded"     
 		errorCode=0
-		errorMessage=""
+		errorMessage="asdf"
 		[api.response.data]
 		type="hash"
 		content=["sha256","keykeykey"]
 
 [db]
-	schema=["account","password","code"]
-	type=["text","sha256","text"]	
+	[[db.schema]]
+		key="account"
+		type="text"
+	[[db.schema]]
+		key="password"
+		type="sha256"	
+	[[db.schema]]
+		key="code"
+		type="text"
+

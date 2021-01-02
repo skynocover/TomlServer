@@ -3,27 +3,44 @@ package globals
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
 	"tomlserver/src/database"
 	"tomlserver/src/resp"
 )
 
 // Config ...
-var Config config
+var Config *Tconfig
 
-type config struct {
+// Lock ...
+var Lock = new(sync.RWMutex)
+
+// GetConfig ...
+func GetConfig() *Tconfig {
+	Lock.RLock()
+	defer Lock.RUnlock()
+	return Config
+}
+
+// Tconfig ...
+type Tconfig struct {
 	Port string `toml:"port"`
 	API  []api  `toml:"api"`
 	DB   struct {
-		Schema []string `toml:"schema"`
-		Type   []string `toml:"type"`
+		Schema []schema `toml:"schema"`
 	} `toml:"db"`
+}
+
+type schema struct {
+	Key  string `toml:"key"`
+	Type string `toml:"type"`
 }
 
 type api struct {
@@ -49,14 +66,14 @@ func (a *api) Database(param map[string]string) {
 	}
 	store := map[string]string{}
 	for k, v := range param {
-		for i := range Config.DB.Schema {
-			if k == Config.DB.Schema[i] {
+		for _, schema := range Config.DB.Schema {
+
+			if k == schema.Key {
 				store[k] = v
 			}
 		}
 	}
 	database.Insert(store)
-
 }
 
 func (a *api) GetParam(r *http.Request) map[string]string {
@@ -97,20 +114,38 @@ func (a *api) GetParam(r *http.Request) map[string]string {
 
 func (a *api) Resp() []byte {
 
+	data := ""
+	switch a.Response.Data.Type {
+	case "text":
+		data = a.Response.Data.Content[0]
+	case "db":
+		for _, content := range a.Response.Data.Content {
+			for _, db := range database.Content {
+
+				v, ok := db[content]
+				if ok {
+					data = fmt.Sprintf("%s: %s, ", content, v)
+				}
+			}
+		}
+	}
+
 	switch a.Response.Type {
 	case "application/json":
 		var resp = resp.Response{
 			ErrorCode:    a.Response.ErrorCode,
 			ErrorMessage: a.Response.ErrorMessage,
-			Data:         a.Response.Data.Content[0],
+			Data:         data,
+			// Data:         a.Response.Data.Content[0],
 		}
 		return resp.ToBytes()
 	case "application/x-www-form-urlencoded":
-		data := url.Values{}
-		data.Set("errorCode", strconv.Itoa(a.Response.ErrorCode))
-		data.Set("errorMessage", a.Response.ErrorMessage)
-		data.Set("data", a.Response.Data.Content[0])
-		return []byte(data.Encode())
+		value := url.Values{}
+		value.Set("errorCode", strconv.Itoa(a.Response.ErrorCode))
+		value.Set("errorMessage", a.Response.ErrorMessage)
+		value.Set("data", data)
+		// data.Set("data", a.Response.Data.Content[0])
+		return []byte(value.Encode())
 	case "text/plain":
 
 	}
@@ -132,7 +167,7 @@ func (a *api) Check(contenttype, method string) (err error) {
 	return errors.New("api method wrong")
 }
 
-func (c *config) Find(uri string) (find api, err error) {
+func (c *Tconfig) Find(uri string) (find api, err error) {
 	for i := range c.API {
 		if c.API[i].Router == uri {
 			find = c.API[i]
@@ -143,10 +178,7 @@ func (c *config) Find(uri string) (find api, err error) {
 	return
 }
 
-func (c *config) Check() (err error) { //讀取設定檔時的確認
-	if len(c.DB.Schema) != len(c.DB.Type) {
-		return errors.New("db schema should equal type")
-	}
+func (c *Tconfig) Check() (err error) { //讀取設定檔時的確認
 
 	for i := range c.API {
 		switch c.API[i].Contenttype {
