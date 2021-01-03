@@ -15,6 +15,27 @@ func Insert(param map[string]string) {
 	id++
 }
 
+// Update ...
+func Update(key int, value map[string]string) {
+	Content[key] = value
+}
+
+// Patch ...
+func Patch(key int, value map[string]string) {
+	for k := range Content[key] {
+		for k1, v1 := range value {
+			if k == k1 {
+				Content[key][k] = v1
+			}
+		}
+	}
+}
+
+// Read ...
+func Read(key int) map[string]string {
+	return Content[key]
+}
+
 // Scan ...
 func Scan() {
 

@@ -13,3 +13,13 @@ Content-Type: application/json
     "account": "admin",
     "password": "456789"
 }
+
+
+####
+GET {{url}}/account
+Content-Type: application/json
+
+{
+    "account": "admin",
+    "password": "456789"
+}

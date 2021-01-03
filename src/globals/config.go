@@ -5,32 +5,70 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"tomlserver/src/database"
 	"tomlserver/src/resp"
+
+	"github.com/BurntSushi/toml"
 )
 
 // Config ...
-var Config *Tconfig
+var Config *tconfig
 
-// Lock ...
-var Lock = new(sync.RWMutex)
+type tconfig struct {
+	Filename       string
+	LastModifyTime int64
+	Lock           *sync.RWMutex
+	Data           *configData
+}
 
-// GetConfig ...
-func GetConfig() *Tconfig {
-	Lock.RLock()
-	defer Lock.RUnlock()
-	return Config
+// NewConfig ...
+func NewConfig(filename string) {
+	Config = &tconfig{
+		Filename:       filename,
+		Lock:           &sync.RWMutex{},
+		Data:           &configData{},
+		LastModifyTime: 0,
+	}
+
+	Config.parse(true)
+
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+			Config.parse(false)
+		}
+	}()
+}
+
+func (c *tconfig) parse(init bool) {
+	fileInfo, _ := os.Stat(c.Filename)
+	currModifyTime := fileInfo.ModTime().Unix()
+	if currModifyTime > c.LastModifyTime {
+		c.LastModifyTime = currModifyTime
+		Config.Lock.Lock()
+		if _, err := toml.DecodeFile(c.Filename, c.Data); err != nil {
+			log.Println("open config err: ", err)
+			if err != nil && init {
+				os.Exit(1)
+			}
+		}
+		Config.Lock.Unlock()
+		log.Printf("Config = %+v\n", c.Data)
+	}
 }
 
 // Tconfig ...
-type Tconfig struct {
+type configData struct {
 	Port string `toml:"port"`
 	API  []api  `toml:"api"`
 	DB   struct {
@@ -61,19 +99,27 @@ type api struct {
 }
 
 func (a *api) Database(param map[string]string) {
-	if !a.Db {
-		return
-	}
 	store := map[string]string{}
 	for k, v := range param {
-		for _, schema := range Config.DB.Schema {
-
+		for _, schema := range Config.Data.DB.Schema {
 			if k == schema.Key {
 				store[k] = v
 			}
 		}
 	}
 	database.Insert(store)
+}
+
+func (a *api) Method(r *http.Request) {
+	switch method {
+	case "get":
+
+	case "post":
+	case "put":
+	case "patch":
+	case "delete":
+
+	}
 }
 
 func (a *api) GetParam(r *http.Request) map[string]string {
@@ -121,7 +167,6 @@ func (a *api) Resp() []byte {
 	case "db":
 		for _, content := range a.Response.Data.Content {
 			for _, db := range database.Content {
-
 				v, ok := db[content]
 				if ok {
 					data = fmt.Sprintf("%s: %s, ", content, v)
@@ -136,7 +181,6 @@ func (a *api) Resp() []byte {
 			ErrorCode:    a.Response.ErrorCode,
 			ErrorMessage: a.Response.ErrorMessage,
 			Data:         data,
-			// Data:         a.Response.Data.Content[0],
 		}
 		return resp.ToBytes()
 	case "application/x-www-form-urlencoded":
@@ -144,7 +188,6 @@ func (a *api) Resp() []byte {
 		value.Set("errorCode", strconv.Itoa(a.Response.ErrorCode))
 		value.Set("errorMessage", a.Response.ErrorMessage)
 		value.Set("data", data)
-		// data.Set("data", a.Response.Data.Content[0])
 		return []byte(value.Encode())
 	case "text/plain":
 
@@ -167,7 +210,7 @@ func (a *api) Check(contenttype, method string) (err error) {
 	return errors.New("api method wrong")
 }
 
-func (c *Tconfig) Find(uri string) (find api, err error) {
+func (c *configData) Find(uri string) (find api, err error) {
 	for i := range c.API {
 		if c.API[i].Router == uri {
 			find = c.API[i]
@@ -178,7 +221,7 @@ func (c *Tconfig) Find(uri string) (find api, err error) {
 	return
 }
 
-func (c *Tconfig) Check() (err error) { //讀取設定檔時的確認
+func (c *configData) Check() (err error) { //讀取設定檔時的確認
 
 	for i := range c.API {
 		switch c.API[i].Contenttype {

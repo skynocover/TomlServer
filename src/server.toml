@@ -22,7 +22,7 @@ port="8080"
 	[api.response]
 		type="application/x-www-form-urlencoded"
 		errorCode=0
-		errorMessage="asdf"
+		errorMessage="adfs"
         [api.response.data]
 		type="db"
 		content=["account","password","code"]
