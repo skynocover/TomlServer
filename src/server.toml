@@ -14,37 +14,45 @@ port="8080"
 		content=["aaa"]
 
 [[api]]
-	router="/account"
-	method=["get","post","patch","delete"]
+	router="/user"
+	method=["get","post","patch","delete","put"]
 	parameter=["account","password"]
 	contenttype="application/json"
 	db=true
 	[api.response]
 		type="application/x-www-form-urlencoded"
 		errorCode=0
-		errorMessage="adfs"
+		errorMessage="success"
         [api.response.data]
 		type="db"
-		content=["account","password","code"]
+		content=["account"]
 	
 [[api]]
 	router="/check"
+	method=["post"]
+	parameter=["account","password"]
+	contenttype="application/json"
+	db=false
 	[api.response]
 		type="application/x-www-form-urlencoded"     
 		errorCode=0
-		errorMessage="asdf"
+		errorMessage="success hash"
 		[api.response.data]
 		type="hash"
 		content=["sha256","keykeykey"]
 
 [db]
 	[[db.schema]]
+		table="user"
 		key="account"
-		type="text"
+		[[db.schema.columns]]
+		name="password"
+		content=["sha256",""]
+		[[db.schema.columns]]
+		name="code"
+		content=["text"]
+		
 	[[db.schema]]
-		key="password"
-		type="sha256"	
-	[[db.schema]]
-		key="code"
-		type="text"
+		table="auth"
+		key="table"
 

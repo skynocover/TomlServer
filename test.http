@@ -6,20 +6,44 @@ Content-Type: application/x-www-form-urlencoded
 account=admin&password=asdf
 
 ####
-POST {{url}}/account
+POST {{url}}/user
 Content-Type: application/json
 
 {
     "account": "admin",
-    "password": "456789"
+    "password": "456789",
+    "code":"123456",
+    "name":"userName"
 }
 
 
 ####
-GET {{url}}/account
+PUT {{url}}/user/usr1
 Content-Type: application/json
 
 {
-    "account": "admin",
-    "password": "456789"
+    "account": "user1",
+    "password": "aaaa"
+}
+
+####
+PATCH {{url}}/user/admin
+Content-Type: application/json
+
+{
+    "code":"i3581",
+    "name":"wrong"
+}
+
+
+####
+GET {{url}}/user/usr1
+
+####
+POST {{url}}/check
+Content-Type: application/json
+
+{
+    "account": "user1",
+    "password": "aaaa"
 }

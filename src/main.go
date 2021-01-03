@@ -28,27 +28,29 @@ func main() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
-	api, err := globals.Config.Data.Find(r.RequestURI)
+	api, err := globals.Config.Data.FindAPI(r)
 	if err != nil {
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		fmt.Fprintf(w, "uri fine fail")
 		return
 	}
 	if err := api.Check(r.Header.Get("Content-Type"), r.Method); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "api content type of method fail")
 		return
 	}
-	param := api.GetParam(r)
-	log.Println(param)
 
-	if api.Db {
-		api.Database(param)
+	resp, err := api.Handle(r)
+	if err != nil {
+		log.Printf("api handler fail, %+v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "api content type of method fail")
+		return
 	}
 
-	for k, v := range database.Content {
-		fmt.Println(k, v)
-	}
+	database.Scan()
 
 	w.Header().Set("Content-Type", api.Response.Type)
 	// w.Header().Set("Content-Type", "application/json")
-	w.Write(api.Resp())
+	w.Write(api.Resp(r.Method, resp))
 }
