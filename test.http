@@ -10,7 +10,7 @@ POST {{url}}/user
 Content-Type: application/json
 
 {
-    "account": "admin",
+    "account": "user3",
     "password": "456789",
     "code":"123456",
     "name":"userName"
@@ -18,7 +18,7 @@ Content-Type: application/json
 
 
 ####
-PUT {{url}}/user/usr1
+PUT {{url}}/user/user3
 Content-Type: application/json
 
 {
@@ -37,7 +37,7 @@ Content-Type: application/json
 
 
 ####
-GET {{url}}/user/usr1
+GET {{url}}/user/user3
 
 ####
 POST {{url}}/check

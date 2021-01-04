@@ -20,7 +20,7 @@ port="8080"
 	contenttype="application/json"
 	db=true
 	[api.response]
-		type="application/x-www-form-urlencoded"
+		type="application/json"
 		errorCode=0
 		errorMessage="success"
         [api.response.data]

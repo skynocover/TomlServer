@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -18,7 +17,7 @@ import (
 	"tomlserver/src/resp"
 )
 
-type post struct {
+type put struct {
 	//input
 	contentType  string
 	responseType string
@@ -27,11 +26,12 @@ type post struct {
 	content      []string
 	dataType     string
 	//generate
-	urlKey string
-	body   map[string]string
+	urlKey   string
+	urlValue string
+	body     map[string]string
 }
 
-func (p *post) Response() []byte {
+func (p *put) Response() []byte {
 	switch p.dataType {
 	case "text":
 	case "hash":
@@ -68,21 +68,20 @@ func (p *post) Response() []byte {
 		value.Set("data", p.content[0])
 		return []byte(value.Encode())
 	case "text/plain":
-
 		return []byte(p.content[0])
-
 	}
 	return nil
 }
 
-func (p *post) GetParam(r *http.Request) {
+func (p *put) GetParam(r *http.Request) {
 
 	params := strings.Split(r.RequestURI, "/")
 	log.Println(params)
 
 	switch len(params) {
-	case 2:
+	case 3:
 		p.urlKey = params[1]
+		p.urlValue = params[2]
 	default:
 		return
 	}
@@ -138,12 +137,12 @@ func (p *post) GetParam(r *http.Request) {
 	return
 }
 
-func (p *post) Database() error {
+func (p *put) Database() error {
 	dbContent := map[string]string{}
 
 	for _, schema := range globals.Config.Data.DB.Schema {
-		for k1, v1 := range p.body {
-			for i := range schema.Columns {
+		for i := range schema.Columns {
+			for k1, v1 := range p.body {
 				if schema.Columns[i].Name == k1 {
 					switch schema.Columns[i].Content[0] {
 					case "text":
@@ -155,18 +154,11 @@ func (p *post) Database() error {
 						data := []byte(fmt.Sprintf("%s%s", v1, schema.Columns[i].Content[1]))
 						dbContent[k1] = fmt.Sprintf("%x", md5.Sum(data))
 					}
-
 				}
 			}
 		}
 	}
 
-	for _, schema := range globals.Config.Data.DB.Schema {
-		for k1, _ := range p.body {
-			if schema.Key == k1 {
-				return database.Insert(p.urlKey, p.body[schema.Key], dbContent)
-			}
-		}
-	}
-	return errors.New("Schema now exist")
+	return database.Update(p.urlKey, p.urlValue, dbContent)
+
 }

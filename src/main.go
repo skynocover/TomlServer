@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"tomlserver/src/apifactory"
 	"tomlserver/src/database"
 	"tomlserver/src/globals"
 )
@@ -22,7 +23,7 @@ func main() {
 	log.Println(fmt.Sprintf("%+v", globals.Config))
 
 	http.HandleFunc("/", handler)
-	log.Println(fmt.Sprintf("Run toml server on Port: %s", (globals.Config).Data.Port))
+	log.Println(fmt.Sprintf("Run toml server on Port: %s", globals.Config.Data.Port))
 	log.Fatal(http.ListenAndServe(":"+globals.Config.Data.Port, nil))
 }
 
@@ -40,17 +41,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := api.Handle(r)
-	if err != nil {
-		log.Printf("api handler fail, %+v\n", err)
+	newapi := apifactory.NewAPI(api.Contenttype, api.Response.Type, api.Response.Data.Type, r.Method, api.Response.ErrorCode, api.Response.ErrorMessage, api.Response.Data.Content)
+
+	if newapi == nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "api content type of method fail")
+		fmt.Fprintf(w, "Request method type of api wrong")
 		return
 	}
+
+	newapi.GetParam(r)
+	if api.Db {
+		if err := newapi.Database(); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, err.Error())
+			return
+		}
+	}
+	result := newapi.Response()
 
 	database.Scan()
 
 	w.Header().Set("Content-Type", api.Response.Type)
-	// w.Header().Set("Content-Type", "application/json")
-	w.Write(api.Resp(r.Method, resp))
+	w.Write(result)
 }

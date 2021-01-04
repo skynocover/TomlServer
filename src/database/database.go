@@ -4,23 +4,24 @@ import (
 	"fmt"
 )
 
-var id = 0
-
-func init() {
-
-}
-
 // Content ...         table      key        values.......
 var Content = map[string]map[string]map[string]string{}
 
 // Insert ...
-func Insert(table, key string, value map[string]string) {
+func Insert(table, key string, value map[string]string) error {
 	row, ok := Content[table]
 	if !ok {
 		row = map[string]map[string]string{}
 	}
-	row[key] = value
-	Content[table] = row
+
+	_, ok1 := row[key]
+	if !ok1 {
+		row[key] = value
+		Content[table] = row
+		return nil
+	}
+	return fmt.Errorf("Column already exist")
+
 }
 
 // Update ...
