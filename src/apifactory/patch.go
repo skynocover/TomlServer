@@ -53,20 +53,19 @@ func (p *patch) Response() []byte {
 
 	switch p.responseType {
 	case "application/json":
-
 		var resp = resp.Response{
 			ErrorCode:    p.errorCode,
 			ErrorMessage: p.errorMessage,
 		}
-
 		return resp.ToBytesWithObject(p.body)
-	case "application/x-www-form-urlencoded":
 
+	case "application/x-www-form-urlencoded":
 		value := url.Values{}
 		value.Set("errorCode", strconv.Itoa(p.errorCode))
 		value.Set("errorMessage", p.errorMessage)
 		value.Set("data", p.content[0])
 		return []byte(value.Encode())
+
 	case "text/plain":
 		return []byte(p.content[0])
 	}

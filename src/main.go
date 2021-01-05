@@ -31,23 +31,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	api, err := globals.Config.Data.FindAPI(r)
 	if err != nil {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		fmt.Fprintf(w, "uri fine fail")
-		return
-	}
-	if err := api.Check(r.Header.Get("Content-Type"), r.Method); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "api content type of method fail")
+		fmt.Fprintf(w, "API fine fail, err: %v", err)
 		return
 	}
 
-	newapi := apifactory.NewAPI(api.Contenttype, api.Response.Type, api.Response.Data.Type, r.Method, api.Response.ErrorCode, api.Response.ErrorMessage, api.Response.Data.Content)
-
-	if newapi == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Request method type of api wrong")
-		return
-	}
+	newapi := apifactory.NewAPI(api.ContentType, api.Response.Type, api.Response.Data.Type, r.Method, api.Response.ErrorCode, api.Response.ErrorMessage, api.Response.Data.Content)
 
 	newapi.GetParam(r)
 	if api.Db {
